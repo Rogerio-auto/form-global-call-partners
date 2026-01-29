@@ -1,0 +1,24 @@
+{
+  "name": "global-call-partners-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo for Global Call Partners onboarding integration",
+  "scripts": {
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "build:all": "npm run build:frontend && npm run build:backend"
+  },
+  "keywords": [
+    "onboarding",
+    "facebook-oauth",
+    "twilio",
+    "whatsapp",
+    "typescript"
+  ],
+  "author": "Global Call Partners",
+  "license": "MIT"
+}
