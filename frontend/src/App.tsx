@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import OnboardingForm from './components/OnboardingForm'
 import './App.css'
 

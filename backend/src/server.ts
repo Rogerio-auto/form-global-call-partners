@@ -8,7 +8,7 @@ import cors from 'cors';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
-import { store, OnboardingData } from './store';
+import { store } from './store';
 import { sendWhatsAppMessage, sendSMSMessage } from './lib/twilio';
 import { sendEmail } from './lib/mail';
 import { getAgents, getAgentById } from './lib/supabase';
@@ -45,7 +45,7 @@ function isValidE164(phone: string): boolean {
 }
 
 // GET /api/agents - Buscar agentes do Supabase
-app.get('/api/agents', async (req: Request, res: Response) => {
+app.get('/api/agents', async (_req: Request, res: Response) => {
   try {
     const agents = await getAgents();
     res.json({ success: true, agents });
@@ -60,7 +60,7 @@ app.get('/api/agents', async (req: Request, res: Response) => {
 });
 
 // POST /api/submit - Submeter formulário de onboarding
-app.post('/api/submit', async (req: Request, res: Response) => {
+app.post('/api/submit', async (req: Request, res: Response): Promise<any> => {
   try {
     const {
       name,
@@ -219,7 +219,7 @@ app.post('/api/submit', async (req: Request, res: Response) => {
 });
 
 // GET /connect?token=... - Redirecionar para OAuth do Facebook
-app.get('/connect', (req: Request, res: Response) => {
+app.get('/connect', (req: Request, res: Response): any => {
   try {
     const { token } = req.query;
 
@@ -260,7 +260,7 @@ app.get('/connect', (req: Request, res: Response) => {
 });
 
 // GET /auth/facebook/callback - Callback OAuth do Facebook
-app.get('/auth/facebook/callback', async (req: Request, res: Response) => {
+app.get('/auth/facebook/callback', async (req: Request, res: Response): Promise<any> => {
   try {
     const { code, state } = req.query;
 
@@ -315,7 +315,7 @@ app.get('/auth/facebook/callback', async (req: Request, res: Response) => {
 });
 
 // GET /debug/token/:token - Debug (desenvolvimento)
-app.get('/debug/token/:token', (req: Request, res: Response) => {
+app.get('/debug/token/:token', (req: Request, res: Response): any => {
   try {
     const { token } = req.params;
     const data = store.get(token);
@@ -332,12 +332,12 @@ app.get('/debug/token/:token', (req: Request, res: Response) => {
 });
 
 // GET /api/status - Healthcheck
-app.get('/api/status', (req: Request, res: Response) => {
+app.get('/api/status', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // DELETE /debug/clear - Limpar store (DEV ONLY)
-app.delete('/debug/clear', (req: Request, res: Response) => {
+app.delete('/debug/clear', (_req: Request, res: Response) => {
   try {
     const allData = store.getAll();
     const count = allData.length;
@@ -359,12 +359,12 @@ app.delete('/debug/clear', (req: Request, res: Response) => {
 });
 
 // 404 handler
-app.use((req: Request, res: Response) => {
+app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Rota não encontrada' });
 });
 
 // Error handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Erro global:', err);
   res.status(500).json({ error: 'Erro interno do servidor' });
 });
