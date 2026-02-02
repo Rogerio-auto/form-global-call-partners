@@ -11,6 +11,143 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
+.form-header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0.4;
+  transition: opacity 0.3s;
+}
+
+.step.active {
+  opacity: 1;
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2a2a2a;
+  border: 2px solid #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.step.active .step-number {
+  border-color: #25D366;
+  background: rgba(37, 211, 102, 0.1);
+  color: #25D366;
+}
+
+.step.completed .step-number {
+  background: #25D366;
+  border-color: #25D366;
+  color: #fff;
+}
+
+.step-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.step-line {
+  height: 2px;
+  width: 40px;
+  background: #444;
+  margin-top: -20px;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #ddd;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.form-actions.split {
+  justify-content: space-between;
+}
+
+.form-actions.split button {
+  flex: 1;
+}
+
+.btn-full {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-secondary {
+  background: #2a2a2a;
+  color: #fff;
+  border: 1px solid #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #333;
+}
+
+.alert-icon {
+  margin-bottom: -4px;
+  margin-right: 8px;
+}
+
+.opt-in-icon-lucide {
+  color: #25D366;
+}
+
+.integrate-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(37, 211, 102, 0.1);
+  color: #25D366;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  margin: 1rem 0;
+  transition: background 0.2s;
+}
+
+.integrate-link:hover {
+  background: rgba(37, 211, 102, 0.2);
+}
+
 .form-card h2 {
   margin-bottom: 0.5rem;
   color: #fff;
