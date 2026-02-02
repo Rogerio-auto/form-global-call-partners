@@ -1,12 +1,12 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
-// Carregar vari√°veis de ambiente ANTES de importar outros m√≥dulos
+// Carregar vari·veis de ambiente ANTES de importar outros mÛdulos
 dotenv.config();
 
-import express, { Request, Response, NextFunction } from 'express';
-import cors from 'cors';
-import axios from 'axios';
-import { getAgents, getAgentById } from './lib/supabase';
+import express, { Request, Response, NextFunction } from "express";
+import cors from "cors";
+import axios from "axios";
+import { getAgents, getAgentById } from "./lib/supabase";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -16,28 +16,28 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Helper para gerar slug
+// ValidaÁ„o de telefone E.164
 function isValidE164(phone: string): boolean {
   return /^\+[1-9]\d{1,14}$/.test(phone);
 }
 
 // GET /api/agents - Buscar agentes do Supabase
-app.get('/api/agents', async (_req: Request, res: Response) => {
+app.get("/api/agents", async (_req: Request, res: Response) => {
   try {
     const agents = await getAgents();
     res.json({ success: true, agents });
   } catch (error) {
-    console.error('Erro ao buscar agentes:', error);
+    console.error("Erro ao buscar agentes:", error);
     res.status(500).json({
       success: false,
-      message: 'Erro ao buscar agentes',
-      details: error instanceof Error ? error.message : 'Erro desconhecido'
+      message: "Erro ao buscar agentes",
+      details: error instanceof Error ? error.message : "Erro desconhecido"
     });
   }
 });
 
-// POST /api/submit - Submeter formul√°rio de onboarding
-app.post('/api/submit', async (req: Request, res: Response): Promise<any> => {
+// POST /api/submit - Submeter formul·rio de onboarding
+app.post("/api/submit", async (req: Request, res: Response): Promise<any> => {
   try {
     const {
       name,
@@ -56,52 +56,26 @@ app.post('/api/submit', async (req: Request, res: Response): Promise<any> => {
       services_not_offered
     } = req.body;
 
-    // Valida√ß√µes b√°sicas
+    // ValidaÁıes b·sicas
     if (!name || !owner_name || !owner_phone || !owner_email || !target_country || !base_agent || !timezone) {
       return res.status(400).json({
         success: false,
-        message: 'Campos obrigat√≥rios faltando',
-        details: 'name, owner_name, owner_phone, owner_email, target_country, base_agent e timezone s√£o obrigat√≥rios'
-      });
-    }
-
-    // Valida√ß√µes dos novos campos
-    if (!business_niche || !service_area || !business_hours || !services_offered || !services_not_offered) {
-      return res.status(400).json({
-        success: false,
-        message: 'Campos de informa√ß√µes do neg√≥cio faltando',
-        details: 'business_niche, service_area, business_hours, services_offered e services_not_offered s√£o obrigat√≥rios'
+        message: "Campos obrigatÛrios faltando",
+        details: "name, owner_name, owner_phone, owner_email, target_country, base_agent e timezone s„o obrigatÛrios"
       });
     }
 
     if (!isValidE164(owner_phone)) {
       return res.status(400).json({
         success: false,
-        message: 'Telefone inv√°lido',
-        details: 'O telefone deve estar no formato E.164 (ex: +5511999999999)'
+        message: "Telefone inv·lido",
+        details: "O telefone deve estar no formato E.164 (ex: +5511999999999)"
       });
     }
 
-    // Buscar dados do agente (id_millis)
+    // Buscar dados do agente (id_millis e nome)
     let agentIdMillis = base_agent;
-    try {
-      const agent = await getAgentById(base_agent);
-      if (agent) {
-        agentIdMillis = agent.id_millis;
-      }
-    } catch (error) {
-      console.warn('Erro ao buscar agente, usando ID fornecido:', error);
-    }
-
-    // Gerar slug
-    const slug = generateSlug(name);
-
-    // Verificar duplicidade (idempot√™ncia)
-    const existing = store.findByEmailOrSlug(owner_email, slug);
-    if (existing) {
-      const baseUrl = getBaseUrl(req);
-      const integrateLink = `${baseUrl}/connect?token=${existing.token}`;
-    let agentName = '';
+    let agentName = "";
     try {
       const agent = await getAgentById(base_agent);
       if (agent) {
@@ -109,7 +83,7 @@ app.post('/api/submit', async (req: Request, res: Response): Promise<any> => {
         agentName = agent.name;
       }
     } catch (error) {
-      console.warn('Erro ao buscar agente, usando ID fornecido:', error);
+      console.warn("Erro ao buscar agente, usando ID fornecido:", error);
     }
 
     // Preparar payload para n8n
@@ -136,26 +110,25 @@ app.post('/api/submit', async (req: Request, res: Response): Promise<any> => {
     const n8nUrl = process.env.N8N_WEBHOOK_URL;
     
     if (!n8nUrl) {
-      console.error('N8N_WEBHOOK_URL n√£o configurada');
+      console.error("N8N_WEBHOOK_URL n„o configurada");
       return res.status(500).json({
         success: false,
-        message: 'Webhook n√£o configurado',
-        details: 'N8N_WEBHOOK_URL n√£o foi definida nas vari√°veis de ambiente'
+        message: "Webhook n„o configurado",
+        details: "N8N_WEBHOOK_URL n„o foi definida nas vari·veis de ambiente"
       });
     }
 
     try {
       await axios.post(n8nUrl, payload, {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         timeout: 10000
       });
 
-      console.log('‚úì Dados enviados para webhook n8n com sucesso');
+      console.log(" Dados enviados para webhook n8n com sucesso");
 
-      // Retornar sucesso
-      res.json({
+      return res.json({
         success: true,
-        message: 'Cadastro realizado com sucesso! Seus dados foram enviados para processamento.',
+        message: "Cadastro realizado com sucesso! Seus dados foram enviados para processamento.",
         data: {
           name,
           owner_name,
@@ -164,67 +137,52 @@ app.post('/api/submit', async (req: Request, res: Response): Promise<any> => {
         }
       });
 
-    } catch (webhookError) {
-      console.error('Erro ao enviar para webhook n8n:', webhookError);
+    } catch (webhookError: any) {
+      console.error("Erro ao enviar para webhook n8n:", webhookError.message);
       return res.status(500).json({
         success: false,
-        message: 'Erro ao enviar dados para processamento',
-        details: webhookError instanceof Error ? webhookError.message : 'Erro ao conectar com webhook'
+        message: "Erro ao enviar dados para processamento",
+        details: webhookError instanceof Error ? webhookError.message : "Erro ao conectar com webhook"
       });
-    }(!token || typeof token !== 'string') {
-      return res.status(400).send('Token inv√°lido ou ausente');
     }
-
-    // Verificar se token existe
-    const data = store.get(token);
-    if (!data) {
-      return res.status(404).send('Token n√£o encontrado ou expirado');
-    }
-
-    // Construir URL OAuth do Facebook
-    const fbAppId = process.env.FACEBOOK_APP_ID!;
-    const redirectUri = process.env.FACEBOOK_REDIRECT_URI!;
-    
-    // Scopes necess√°rios para WABA
-    const scopes = [
-      'pages_show_list',
-      'business_management',
-      'whatsapp_business_management',
-      'whatsapp_business_messaging'
-    ].join(',');
-
-    const authUrl = `https://www.facebook.com/v17.0/dialog/oauth?` +
-      `client_id=${fbAppId}` +
-      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&state=${token}` +
-      `&scope=${encodeURIComponent(scopes)}`;
-
-    res.redirect(authUrl);
 
   } catch (error) {
-    console.error('Erro em /connect:', error);
-    res.status(500).send('Erro ao iniciar OAuth');
+    console.error("Erro em /api/submit:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Erro interno do servidor",
+      details: error instanceof Error ? error.message : "Erro desconhecido"
+    });
   }
 });
 
-// GET /auth/facebook/callback - Callback OAuth do Facebook
-app.get('/auth/facebook/callback', async (req: Request, res: Response): Promise<any> => {
-  try {
-    const { code, state } = req.query;
-
-    if (!code || !state || typeof code !== 'string' || typeof state !== 'string') {
-      return res.status(400).send('Callback inv√°lido: c√≥digo ou state ausentes');
-    }api/status - Healthcheck
-app.get('/api/status', (_req: Request, res: Response) => {
+// GET /api/status - Healthcheck
+app.get("/api/status", (_req: Request, res: Response) => {
   res.json({ 
-    status: 'ok', 
+    status: "ok", 
     timestamp: new Date().toISOString(),
     webhook_configured: !!process.env.N8N_WEBHOOK_URL
-  });'========================================');
-  console.log('  Global Call Partners - Backend API');
-  console.log('========================================');
-  console.log(`‚úì Servidor rodando na porta ${PORT}`);
-  console.log(`‚úì URL: http://localhost:${PORT}`);
-  console.log(`‚úì Healthcheck: http://localhost:${PORT}/api/status`);
-  console.log(`‚úì Webhook n8n: ${process.env.N8N_WEBHOOK_URL ? 'Configurado' : '‚ö†Ô∏è  N√ÉO CONFIGURADO'}`);
-  console.log('========================================'
+  });
+});
+
+// 404 handler
+app.use((_req: Request, res: Response) => {
+  res.status(404).json({ error: "Rota n„o encontrada" });
+});
+
+// Error handler
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error("Erro global:", err);
+  res.status(500).json({ error: "Erro interno do servidor" });
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log("========================================");
+  console.log("  Global Call Partners - Backend API");
+  console.log("========================================");
+  console.log(` Servidor rodando na porta ${PORT}`);
+  console.log(` Healthcheck: http://localhost:${PORT}/api/status`);
+  console.log(` Webhook n8n: ${process.env.N8N_WEBHOOK_URL ? "Configurado" : "  N√O CONFIGURADO"} `);
+  console.log("========================================");
+});
