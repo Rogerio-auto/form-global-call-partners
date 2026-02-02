@@ -19,6 +19,11 @@ interface FormData {
   timezone: string
   area_code: string
   opt_in_consent: boolean
+  business_niche: string
+  service_area: string
+  business_hours: string
+  services_offered: string
+  services_not_offered: string
 }
 
 interface SubmitResponse {
@@ -42,7 +47,12 @@ function OnboardingForm() {
     street: '',
     timezone: '',
     area_code: '',
-    opt_in_consent: false
+    opt_in_consent: false,
+    business_niche: '',
+    service_area: '',
+    business_hours: '',
+    services_offered: '',
+    services_not_offered: ''
   })
 
   const [agents, setAgents] = useState<Agent[]>([])
@@ -75,7 +85,7 @@ function OnboardingForm() {
     return e164Regex.test(phone)
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
     const checked = (e.target as HTMLInputElement).checked
     
@@ -148,7 +158,12 @@ function OnboardingForm() {
       owner_name: '',
       owner_phone: '',
       owner_email: '',
-      target_country: '',
+      target_country: '',,
+      business_niche: '',
+      service_area: '',
+      business_hours: '',
+      services_offered: '',
+      services_not_offered: ''
       base_agent: '',
       street: '',
       timezone: '',
@@ -349,24 +364,122 @@ function OnboardingForm() {
               </select>
             </div>
 
-            <div className="form-group checkbox-group">
-              <label className="checkbox-label">
+            {/* Segunda Seção - Informações do Negócio */}
+            <div className="form-section">
+              <div className="section-header">
+                <h3>📊 Informações do Negócio</h3>
+                <p>Conte-nos mais sobre sua empresa e serviços</p>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="business_niche">Qual o nicho da sua empresa? *</label>
                 <input
-                  type="checkbox"
-                  name="opt_in_consent"
-                  checked={formData.opt_in_consent}
+                  type="text"
+                  id="business_niche"
+                  name="business_niche"
+                  value={formData.business_niche}
                   onChange={handleChange}
                   required
                   disabled={status === 'submitting'}
+                  placeholder="Ex: Saúde e Bem-estar, Tecnologia, E-commerce, etc."
                 />
-                <span className="checkbox-text">
-                  Eu concordo em receber mensagens de texto (SMS) da <strong>MB CREATIVE LLC</strong> e <strong>Global Call Partners</strong> no número fornecido acima. Entendo que posso receber notificações de sistema, alertas de dados e atualizações de marketing. A frequência das mensagens varia.
-                  <br /><br />
-                  <span className="terms-text">
-                    Taxas de mensagens e dados podem ser aplicadas. Responda <strong>STOP</strong> para cancelar a qualquer momento. Responda <strong>HELP</strong> para ajuda.
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="service_area">Qual a área que você atende? *</label>
+                <input
+                  type="text"
+                  id="service_area"
+                  name="service_area"
+                  value={formData.service_area}
+                  onChange={handleChange}
+                  required
+                  disabled={status === 'submitting'}
+                  placeholder="Ex: São Paulo - SP, Todo Brasil, América Latina, etc."
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="business_hours">Qual horário de funcionamento? *</label>
+                <input
+                  type="text"
+                  id="business_hours"
+                  name="business_hours"
+                  value={formData.business_hours}
+                  onChange={handleChange}
+                  required
+                  disabled={status === 'submitting'}
+                  placeholder="Ex: Seg-Sex 9h-18h, 24/7, Horário comercial, etc."
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="services_offered">Que tipo de serviço você faz? *</label>
+                <textarea
+                  id="services_offered"
+                  name="services_offered"
+                  value={formData.services_offered}
+                  onChange={handleChange}
+                  required
+                  disabled={status === 'submitting'}
+                  placeholder="Descreva os principais serviços ou produtos que você oferece..."
+                  rows={4}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="services_not_offered">Que tipo de serviço você NÃO faz? *</label>
+                <textarea
+                  id="services_not_offered"
+                  name="services_not_offered"
+                  value={formData.services_not_offered}
+                  onChange={handleChange}
+                  required
+                  disabled={status === 'submitting'}
+                  placeholder="Descreva o que você não oferece para evitar expectativas incorretas..."
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            <div className="opt-in-container">
+              <div className="opt-in-header">
+                <span className="opt-in-icon">📱</span>
+                <h3>Consentimento de Comunicação</h3>
+              </div>
+              <div className="opt-in-content">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="opt_in_consent"
+                    checked={formData.opt_in_consent}
+                    onChange={handleChange}
+                    required
+                    disabled={status === 'submitting'}
+                  />
+                  <span className="checkbox-text">
+                    <strong className="opt-in-main-text">
+                      ✓ Sim, autorizo o recebimento de mensagens SMS
+                    </strong>
+                    <span className="opt-in-description">
+                      Você receberá mensagens de texto da <strong>MB CREATIVE LLC</strong> e <strong>Global Call Partners</strong> no número fornecido, incluindo:
+                    </span>
+                    <ul className="opt-in-list">
+                      <li>Notificações importantes do sistema</li>
+                      <li>Atualizações sobre sua conta</li>
+                      <li>Alertas de segurança e confirmações</li>
+                      <li>Comunicações de marketing (ocasionalmente)</li>
+                    </ul>
+                    <span className="terms-text">
+                      📋 <strong>Informações importantes:</strong><br/>
+                      • Taxas de mensagens e dados podem ser aplicadas conforme seu plano<br/>
+                      • Responda <strong>STOP</strong> a qualquer momento para cancelar<br/>
+                      • Responda <strong>HELP</strong> para obter suporte<br/>
+                      • Frequência das mensagens: varia conforme a atividade
+                    </span>
                   </span>
-                </span>
-              </label>
+                </label>
+              </div>
             </div>
 
             <button 

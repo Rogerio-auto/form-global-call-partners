@@ -1,6 +1,6 @@
-# Global Call Partners - Onboarding Integration
+# Global Call Partners - Formulário de Onboarding
 
-Monorepo TypeScript com frontend React + Vite e backend Express para fluxo de onboarding com integração Facebook OAuth, WhatsApp (Twilio) e webhook n8n.
+Sistema de captura de informações via formulário web com envio automático para webhook n8n.
 
 ## Estrutura do Projeto
 
@@ -14,76 +14,27 @@ Monorepo TypeScript com frontend React + Vite e backend Express para fluxo de on
 ## Pré-requisitos
 
 - Node.js 18+ e npm
-- Conta Twilio (para WhatsApp/SMS)
-- Facebook App configurado (para OAuth)
-- Servidor SMTP (para emails)
+- Webhook n8n configurado
 
 ## Setup Inicial
 
-### 1. Configurar Facebook App
+### 1. Configurar Variáveis de Ambiente
 
-1. Acesse [Facebook Developers](https://developers.facebook.com/)
-2. Crie um novo app ou use existente
-3. Em "Facebook Login" > "Settings", adicione a Redirect URI:
-   - Desenvolvimento: `http://localhost:3001/auth/facebook/callback`
-   - Produção: `https://seu-dominio.com/auth/facebook/callback`
-4. Anote o **App ID** e **App Secret**
-5. Adicione permissões necessárias: `pages_show_list`, `business_management`, `whatsapp_business_management`
-
-### 2. Configurar Twilio
-
-1. Acesse [Twilio Console](https://www.twilio.com/console)
-2. Anote **Account SID** e **Auth Token**
-3. Para WhatsApp:
-   - Use Twilio Sandbox: `whatsapp:+14155238886` (dev)
-   - Ou configure número próprio (produção)
-4. Para SMS fallback, configure um número Twilio
-
-### 3. Configurar Variáveis de Ambiente
-
-Copie o `.env.example` para `.env` no backend:
-
-```bash
-cd backend
-cp .env.example .env
-```
-
-Edite `backend/.env` com suas credenciais reais:
+Crie o arquivo `backend/.env`:
 
 ```env
 # Server
 PORT=3001
-BASE_URL=http://localhost:3001
 
-# Facebook OAuth
-FACEBOOK_APP_ID=seu_app_id_aqui
-FACEBOOK_APP_SECRET=seu_app_secret_aqui
-FACEBOOK_REDIRECT_URI=http://localhost:3001/auth/facebook/callback
-
-# Twilio
-TWILIO_ACCOUNT_SID=seu_account_sid
-TWILIO_AUTH_TOKEN=seu_auth_token
-TWILIO_WHATSAPP_SENDER=whatsapp:+14155238886
-TWILIO_SMS_SENDER=+1234567890
-
-# Email (SMTP)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=seu_email@gmail.com
-SMTP_PASS=sua_senha_ou_app_password
-
-# n8n Webhook
+# n8n Webhook (OBRIGATÓRIO)
 N8N_WEBHOOK_URL=https://autowebhook.globalcallpartnes.cloud/webhook/onboarding
 
-# App Secret (para tokens)
-APP_SECRET=seu_secret_aleatório_aqui
-
-# Supabase (para agentes)
+# Supabase (para lista de agentes)
 SUPABASE_URL=https://seu-projeto.supabase.co
 SUPABASE_ANON_KEY=sua_chave_anon_aqui
 ```
 
-### 4. Configurar Supabase (Agentes)
+### 2. Configurar Supabase (Agentes IA)
 
 Siga as instruções detalhadas em [`backend/SUPABASE_SETUP.md`](backend/SUPABASE_SETUP.md) para:
 1. Criar projeto no Supabase
@@ -91,7 +42,7 @@ Siga as instruções detalhadas em [`backend/SUPABASE_SETUP.md`](backend/SUPABAS
 3. Inserir agentes de exemplo
 4. Obter credenciais (URL e anon key)
 
-### 5. Instalar Dependências
+### 3. Instalar Dependências
 
 Na raiz do projeto:
 
@@ -147,56 +98,85 @@ npm run dev
    - Nome do proprietário
    - Telefone (formato E.164: +5511999999999)
    - Email
-   - País alvo, agente base, etc.
+   - País alvo
+   - Selecione um agente IA
+   - Timezone
+   - Aceite o consentimento de SMS (obrigatório)
 3. Clique em "Enviar"
 
-### 2. Verificar Envios
+### 2. Verificar Webhook
 
-- **WhatsApp**: Verifique o número informado (se usar Twilio Sandbox, precisa estar inscrito)
-- **Email**: Verifique a caixa de entrada do email informado
-- **Webhook n8n**: Payload será enviado para o webhook configurado
+Os dados serão enviados automaticamente para o webhook n8n configurado em `N8N_WEBHOOK_URL`.
 
-### 3. Clicar no Link de Integração
-
-O link recebido será algo como:
+**Payload enviado:**
+```json
+{
+  "name": "Empresa XYZ",
+  "owner_name": "João Silva",
+  "owner_phone": "+5511999999999",
+  "owner_email": "joao@empresa.com",
+  "target_country": "Brasil",
+  "base_agent": "agent-001",
+  "base_agent_name": "Agente de Coleta de Dados",
+  "street": "Rua Exemplo, 123",
+  "timezone": "America/Sao_Paulo",
+  "area_code": "11",
+  "created_at": "2026-02-02T10:30:00.000Z"
+}
 ```
-http://localhost:3001/connect?token=uuid-gerado
-```
-
-Isso iniciará o fluxo OAuth do Facebook.
-
-### 4. Autorizar no Facebook
-
-1. Faça login na conta Meta Business
-2. Conceda as permissões solicitadas
-3. Será redirecionado para página de sucesso
-
-### 5. Debug (Desenvolvimento)
-
-Verificar dados armazenados:
-```
-GET http://localhost:3001/debug/token/seu-token-uuid
-```
-
 Healthcheck:
 ```
 GET http://localhost:3001/api/status
 ```
 
-## Testes com Ngrok (OAuth Callback)
+Resposta:
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-02-02T10:30:00.000Z",
+  "webhook_configured": true
+}
+```
 
-Para testar OAuth em ambiente local:
+## Estrutura de Dados
 
-1. Instale [ngrok](https://ngrok.com/)
-2. Execute:
-   ```bash
-   ngrok http 3001
-   ```
-3. Anote a URL (ex: `https://abc123.ngrok.io`)
-4. Atualize no `.env`:
-   ```
-   BASE_URL=https://abc123.ngrok.io
-   FACEBOOK_REDIRECT_URI=https://abc123.ngrok.io/auth/facebook/callback
+### Campos do Formulário
+
+| Campo | Tipo | Obrigatório | Descrição |
+|-------|------|-------------|-----------|
+| `name` | string | Sim | Nome da empresa |
+| `owner_name` | string | Sim | Nome do proprietário |
+| `owner_phone` | string | Sim | Telefone no formato E.164 |
+| `owner_email` | string | Sim | Email do proprietário |
+| `target_country` | string | Sim | País de operação |
+| `base_agent` | string | Sim | ID do agente IA (Supabase) |
+| `timezone` | string | Sim | Timezone (IANA) |
+| `street` | string | Não | Endereço completo |
+| `area_code` | string | Não | Código de área/DDD |
+
+### Opt-in Consent
+
+O formulário inclui um opt-in obrigatório para recebimento de mensagens SMS da **MB CREATIVE LLC** e **Global Call Partners**, conforme requisitos do Twilio:
+
+- ✅ Consentimento explícito do usuário
+- 📋 Informações sobre tipos de mensagens
+- 🛑 Instruções de cancelamento (STOP)
+- ℹ️ Instruções de ajuda (HELP)
+- 💰 Avisos sobre taxas de mensagens
+
+## Fluxo de Dados
+
+```
+[Usuário] → [Formulário React]
+               ↓ POST /api/submit
+           [Backend Express]
+               ↓ Valida dados
+               ↓ Busca info do agente (Supabase)
+               ↓ POST webhook
+           [n8n Webhook]
+               ↓ Processa automação
+           [Sucesso] → Retorna confirmação
+```URI=https://abc123.ngrok.io/auth/facebook/callback
    ```
 5. Atualize a Redirect URI no Facebook App Dashboard
 6. Reinicie o backend
@@ -227,110 +207,109 @@ cd backend
 npm start
 ```
 
-## Persistência com Supabase (Migração Futura)
+## Endpoints Disponíveis
 
-O código atual usa armazenamento em memória (`Map`). Para produção, migre para Supabase:
+### `GET /api/agents`
+Lista todos os agentes IA disponíveis do Supabase.
 
-### Exemplo de Schema SQL
-
-```sql
-CREATE TABLE onboarding_tokens (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  token UUID UNIQUE NOT NULL,
-  slug TEXT UNIQUE NOT NULL,
-  owner_email TEXT NOT NULL,
-  payload JSONB NOT NULL,
-  facebook_access_token TEXT,
-  facebook_user_data JSONB,
-  status TEXT DEFAULT 'pending',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+**Resposta:**
+```json
+{
+  "success": true,
+  "agents": [
+    {
+      "id": "uuid",
+      "name": "Agente de Coleta de Dados",
+      "description": "Especializado em coletar informações...",
+      "id_millis": "agent-001"
+    }
+  ]
+}
 ```
 
-### Substituir no Código
+### `POST /api/submit`
+Submete os dados do formulário e envia para o webhook n8n.
 
-Veja comentários no arquivo `backend/src/store.ts` com exemplos de chamadas REST para Supabase.
+**Body:**
+```json
+{
+  "name": "Empresa XYZ",
+  "owner_name": "João Silva",
+  "owner_phone": "+5511999999999",
+  "owner_email": "joao@empresa.com",
+  "target_country": "Brasil",
+  "base_agent": "uuid-do-agente",
+  "timezone": "America/Sao_Paulo",
+  "street": "Rua Exemplo, 123",
+  "area_code": "11"
+}
+```
+
+**Resposta Sucesso:**
+```json
+{
+  "success": true,
+  "message": "Cadastro realizado com sucesso!",
+  "data": {
+    "name": "Empresa XYZ",
+    "owner_name": "João Silva",
+    "owner_email": "joao@empresa.com",
+    "agent": "Agente de Coleta de Dados"
+  }
+}
+```
+
+### `GET /api/status`
+Healthcheck do servidor.
+
+**Resposta:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-02-02T10:30:00.000Z",
+  "webhook_configured": true
+}
+```
 
 ## Observações de Segurança
 
 - **Nunca commite** o arquivo `.env` com credenciais reais
-- Use `.env.example` como template
-- Em produção, use variáveis de ambiente do host (Vercel, Railway, etc.)
+- Use variáveis de ambiente do host em produção (Vercel, Railway, etc.)
 - Valide e sanitize todos os inputs do usuário
 - Use HTTPS em produção
+- Configure CORS adequadamente para produção
 
-## WABA (WhatsApp Business API) - Passos Manuais
+## Webhook n8n - Exemplo de Configuração
 
-Após o OAuth, passos adicionais podem ser necessários:
-
-1. **Business Verification**: Verificar empresa no Meta Business Manager
-2. **Phone Number**: Adicionar e verificar número de telefone no WABA
-3. **Template Approval**: Criar e aprovar templates de mensagem
-4. **Webhook Configuration**: Configurar webhook para receber mensagens
-
-O OAuth apenas coleta permissões e access token. A configuração completa do WABA requer passos no Meta Business Manager.
-
-## Estrutura de APIs
-
-### Backend Endpoints
-
-- `POST /api/submit` - Submeter formulário de onboarding
-- `GET /connect?token=<uuid>` - Iniciar OAuth do Facebook
-- `GET /auth/facebook/callback` - Callback do OAuth
-- `GET /debug/token/:token` - Debug (dev only)
-- `GET /api/status` - Healthcheck
-
-### Fluxo de Dados
-
-```
-[Formulário] 
-    ↓ POST /api/submit
-[Backend]
-    ↓ Envia para n8n webhook
-    ↓ Gera token + link
-    ↓ Envia WhatsApp (Twilio)
-    ↓ Envia Email (SMTP)
-[Usuário recebe link]
-    ↓ Clica em link
-[OAuth Facebook]
-    ↓ Autoriza
-[Callback salva access_token]
-    ↓ Página de sucesso
-```
+1. No n8n, crie um workflow com trigger "Webhook"
+2. Configure o método como `POST`
+3. Copie a URL gerada
+4. Adicione no arquivo `.env` como `N8N_WEBHOOK_URL`
+5. O payload recebido terá todos os campos do formulário
 
 ## Troubleshooting
 
-### Erro: "Cannot send WhatsApp message"
+### Erro: "Webhook não configurado"
+- Verifique se `N8N_WEBHOOK_URL` está definida no arquivo `.env`
+- Reinicie o servidor backend após alterar o `.env`
 
-- Verifique credenciais Twilio no `.env`
-- Se usar Sandbox, certifique-se que o número está inscrito (envie "join <código>" para o sandbox)
-- Valide formato E.164 do telefone
+### Erro: "Erro ao buscar agentes"
+- Verifique as credenciais do Supabase (`SUPABASE_URL` e `SUPABASE_ANON_KEY`)
+- Certifique-se que a tabela `ai_agents` foi criada corretamente
+- Verifique as políticas RLS no Supabase
 
-### Erro: "OAuth redirect mismatch"
+### Erro: "Telefone inválido"
+- O telefone deve estar no formato E.164: `+[código país][DDD][número]`
+- Exemplo Brasil: `+5511999999999`
+- Exemplo EUA: `+14155551234`
 
-- Verifique se `FACEBOOK_REDIRECT_URI` no `.env` corresponde exatamente ao configurado no Facebook App
-- Use ngrok para testes locais
+## Próximos Passos (Opcional)
 
-### Erro: "Email not sent"
-
-- Verifique credenciais SMTP no `.env`
-- Para Gmail, use "App Password" ao invés da senha normal
-- Verifique firewall/portas
-
-### Erro 409: "Resource already exists"
-
-- O sistema detectou email ou slug duplicado
-- Use o token/link existente retornado na resposta
-
-## Suporte
-
-Para dúvidas ou problemas, consulte:
-
-- [Twilio Docs](https://www.twilio.com/docs)
-- [Facebook OAuth](https://developers.facebook.com/docs/facebook-login)
-- [Meta Business API](https://developers.facebook.com/docs/whatsapp)
+Se desejar adicionar persistência dos dados enviados:
+1. Crie uma nova tabela no Supabase para armazenar os submissions
+2. Após enviar para o webhook, salve também no Supabase
+3. Implemente dashboard de visualização dos dados
 
 ---
 
-**Desenvolvido com TypeScript + React + Express**
+**Stack:** TypeScript + React + Express + Supabase + n8n
