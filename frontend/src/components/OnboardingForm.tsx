@@ -552,7 +552,7 @@ function OnboardingForm() {
                     <div className="opt-in-container">
                       <div className="opt-in-header">
                         <ShieldCheck size={22} className="opt-in-icon-lucide" />
-                        <h3>Termos de Uso</h3>
+                        <h3>Consentimento de Comunicação</h3>
                       </div>
                       <div className="opt-in-content">
                         <label className="checkbox-label">
@@ -566,10 +566,23 @@ function OnboardingForm() {
                           />
                           <span className="checkbox-text">
                             <strong className="opt-in-main-text">
-                              Autorizo o contato via WhatsApp e SMS
+                              ✓ Sim, autorizo o recebimento de mensagens SMS
                             </strong>
                             <span className="opt-in-description">
-                              Declaro que aceito receber comunicações da Global Call Partners sobre minha conta e notificações.
+                              Você receberá mensagens de texto da <strong>MB CREATIVE LLC</strong> e <strong>Global Call Partners</strong> no número fornecido, incluindo:
+                            </span>
+                            <ul className="opt-in-list">
+                              <li>Notificações importantes do sistema</li>
+                              <li>Atualizações sobre sua conta</li>
+                              <li>Alertas de segurança e confirmações</li>
+                              <li>Comunicações de marketing (ocasionalmente)</li>
+                            </ul>
+                            <span className="terms-text">
+                              📋 <strong>Informações importantes:</strong><br/>
+                              • Taxas de mensagens e dados podem ser aplicadas conforme seu plano<br/>
+                              • Responda <strong>STOP</strong> a qualquer momento para cancelar<br/>
+                              • Responda <strong>HELP</strong> para obter suporte<br/>
+                              • Frequência das mensagens: varia conforme a atividade
                             </span>
                           </span>
                         </label>
