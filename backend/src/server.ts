@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 
-// Carregar variáveis de ambiente ANTES de importar outros módulos
+// Carregar variï¿½veis de ambiente ANTES de importar outros mï¿½dulos
 dotenv.config();
 
 import express, { Request, Response, NextFunction } from "express";
@@ -16,7 +16,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Validação de telefone E.164
+// Validaï¿½ï¿½o de telefone E.164
 function isValidE164(phone: string): boolean {
   return /^\+[1-9]\d{1,14}$/.test(phone);
 }
@@ -36,13 +36,14 @@ app.get("/api/agents", async (_req: Request, res: Response) => {
   }
 });
 
-// POST /api/submit - Submeter formulário de onboarding
+// POST /api/submit - Submeter formulï¿½rio de onboarding
 app.post("/api/submit", async (req: Request, res: Response): Promise<any> => {
   try {
     const {
       name,
       owner_name,
       owner_phone,
+      country_code,
       owner_email,
       target_country,
       base_agent,
@@ -56,19 +57,26 @@ app.post("/api/submit", async (req: Request, res: Response): Promise<any> => {
       services_not_offered
     } = req.body;
 
-    // Validações básicas
+    // Validaï¿½ï¿½es bï¿½sicas
     if (!name || !owner_name || !owner_phone || !owner_email || !target_country || !base_agent || !timezone) {
       return res.status(400).json({
         success: false,
-        message: "Campos obrigatórios faltando",
-        details: "name, owner_name, owner_phone, owner_email, target_country, base_agent e timezone são obrigatórios"
+        message: "Campos obrigatï¿½rios faltando",
+        details: "name, owner_name, owner_phone, owner_email, target_country, base_agent e timezone sï¿½o obrigatï¿½rios"
       });
     }
 
-    if (!isValidE164(owner_phone)) {
+    // Processar telefone - aceita tanto formato E.164 completo quanto separado em country_code + phone
+    let fullPhoneNumber = owner_phone;
+    if (country_code && !owner_phone.startsWith('+')) {
+      // Se veio country_code separado e o telefone nï¿½o tem +, combine-os
+      fullPhoneNumber = `${country_code}${owner_phone.replace(/[\s\-\(\)]/g, '')}`;
+    }
+
+    if (!isValidE164(fullPhoneNumber)) {
       return res.status(400).json({
         success: false,
-        message: "Telefone inválido",
+        message: "Telefone invï¿½lido",
         details: "O telefone deve estar no formato E.164 (ex: +5511999999999)"
       });
     }
@@ -90,7 +98,7 @@ app.post("/api/submit", async (req: Request, res: Response): Promise<any> => {
     const payload = {
       name,
       owner_name,
-      owner_phone,
+      owner_phone: fullPhoneNumber,
       owner_email,
       target_country,
       base_agent: agentIdMillis,
@@ -110,11 +118,11 @@ app.post("/api/submit", async (req: Request, res: Response): Promise<any> => {
     const n8nUrl = process.env.N8N_WEBHOOK_URL;
     
     if (!n8nUrl) {
-      console.error("N8N_WEBHOOK_URL não configurada");
+      console.error("N8N_WEBHOOK_URL nï¿½o configurada");
       return res.status(500).json({
         success: false,
-        message: "Webhook não configurado",
-        details: "N8N_WEBHOOK_URL não foi definida nas variáveis de ambiente"
+        message: "Webhook nï¿½o configurado",
+        details: "N8N_WEBHOOK_URL nï¿½o foi definida nas variï¿½veis de ambiente"
       });
     }
 
@@ -167,7 +175,7 @@ app.get("/api/status", (_req: Request, res: Response) => {
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
-  res.status(404).json({ error: "Rota não encontrada" });
+  res.status(404).json({ error: "Rota nï¿½o encontrada" });
 });
 
 // Error handler
@@ -183,6 +191,6 @@ app.listen(PORT, () => {
   console.log("========================================");
   console.log(` Servidor rodando na porta ${PORT}`);
   console.log(` Healthcheck: http://localhost:${PORT}/api/status`);
-  console.log(` Webhook n8n: ${process.env.N8N_WEBHOOK_URL ? "Configurado" : "  NÃO CONFIGURADO"} `);
+  console.log(` Webhook n8n: ${process.env.N8N_WEBHOOK_URL ? "Configurado" : "  Nï¿½O CONFIGURADO"} `);
   console.log("========================================");
 });

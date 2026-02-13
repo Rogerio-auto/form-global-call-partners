@@ -31,6 +31,7 @@ interface Agent {
 interface FormData {
   name: string
   owner_name: string
+  country_code: string
   owner_phone: string
   owner_email: string
   target_country: string
@@ -60,6 +61,7 @@ function OnboardingForm() {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     owner_name: '',
+    country_code: '+1',
     owner_phone: '',
     owner_email: '',
     target_country: '',
@@ -106,9 +108,118 @@ function OnboardingForm() {
     return e164Regex.test(phone)
   }
 
+  const getFullPhoneNumber = (): string => {
+    // Remove espaços, hífens e parênteses do número
+    const cleanPhone = formData.owner_phone.replace(/[\s\-\(\)]/g, '')
+    // Se o número já começa com +, retorna ele
+    if (cleanPhone.startsWith('+')) {
+      return cleanPhone
+    }
+    // Caso contrário, combina código do país + número
+    return `${formData.country_code}${cleanPhone}`
+  }
+
+  const formatPhoneNumber = (value: string, countryCode: string): string => {
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, '')
+    
+    // Formatação por país
+    switch (countryCode) {
+      case '+55': // Brasil
+        if (numbers.length <= 2) return numbers
+        if (numbers.length <= 6) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`
+        if (numbers.length <= 10) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`
+        return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`
+      
+      case '+1': // EUA/Canadá
+        if (numbers.length <= 3) return numbers
+        if (numbers.length <= 6) return `(${numbers.slice(0, 3)}) ${numbers.slice(3)}`
+        return `(${numbers.slice(0, 3)}) ${numbers.slice(3, 6)}-${numbers.slice(6, 10)}`
+      
+      case '+52': // México
+        if (numbers.length <= 2) return numbers
+        if (numbers.length <= 6) return `${numbers.slice(0, 2)} ${numbers.slice(2)}`
+        return `${numbers.slice(0, 2)} ${numbers.slice(2, 6)}-${numbers.slice(6, 10)}`
+      
+      case '+54': // Argentina
+      case '+56': // Chile
+      case '+57': // Colombia
+      case '+51': // Peru
+        if (numbers.length <= 1) return numbers
+        if (numbers.length <= 5) return `${numbers.slice(0, 1)} ${numbers.slice(1)}`
+        return `${numbers.slice(0, 1)} ${numbers.slice(1, 5)}-${numbers.slice(5, 9)}`
+      
+      case '+34': // Espanha
+      case '+351': // Portugal
+        if (numbers.length <= 3) return numbers
+        if (numbers.length <= 6) return `${numbers.slice(0, 3)} ${numbers.slice(3)}`
+        return `${numbers.slice(0, 3)} ${numbers.slice(3, 6)} ${numbers.slice(6, 9)}`
+      
+      case '+44': // Reino Unido
+        if (numbers.length <= 4) return numbers
+        if (numbers.length <= 7) return `${numbers.slice(0, 4)} ${numbers.slice(4)}`
+        return `${numbers.slice(0, 4)} ${numbers.slice(4, 7)} ${numbers.slice(7, 11)}`
+      
+      default:
+        // Formatação genérica para outros países
+        if (numbers.length <= 4) return numbers
+        if (numbers.length <= 7) return `${numbers.slice(0, 3)} ${numbers.slice(3)}`
+        return `${numbers.slice(0, 3)} ${numbers.slice(3, 6)} ${numbers.slice(6, 10)}`
+    }
+  }
+
+  const getPhonePlaceholder = (countryCode: string): string => {
+    const placeholders: { [key: string]: string } = {
+      '+1': '(555) 123-4567',
+      '+52': '55 1234-5678',
+      '+55': '(11) 99999-9999',
+      '+54': '9 1234-5678',
+      '+56': '9 1234-5678',
+      '+57': '3 1234-5678',
+      '+51': '9 1234-5678',
+      '+58': '412 123-4567',
+      '+34': '612 345 678',
+      '+351': '912 345 678',
+      '+44': '7700 123456',
+      '+33': '612 345 678',
+      '+49': '151 12345678',
+      '+39': '312 345 6789',
+      '+41': '78 123 45 67',
+      '+31': '612 345 678',
+      '+32': '470 12 34 56',
+      '+61': '412 345 678',
+      '+64': '21 123 4567',
+      '+81': '90 1234 5678',
+      '+86': '138 0013 8000',
+      '+91': '98765 43210'
+    }
+    return placeholders[countryCode] || '123456789'
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target
     const checked = (e.target as HTMLInputElement).checked
+    
+    // Formatação especial para o campo de telefone
+    if (name === 'owner_phone') {
+      const formatted = formatPhoneNumber(value, formData.country_code)
+      setFormData(prev => ({
+        ...prev,
+        owner_phone: formatted
+      }))
+      return
+    }
+    
+    // Se mudou o código do país, reformata o número existente
+    if (name === 'country_code' && formData.owner_phone) {
+      const formatted = formatPhoneNumber(formData.owner_phone, value)
+      setFormData(prev => ({
+        ...prev,
+        country_code: value,
+        owner_phone: formatted
+      }))
+      return
+    }
     
     setFormData(prev => ({
       ...prev,
@@ -119,12 +230,14 @@ function OnboardingForm() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     
+    const fullPhoneNumber = getFullPhoneNumber()
+    
     // Validação básica
-    if (!validateE164(formData.owner_phone)) {
+    if (!validateE164(fullPhoneNumber)) {
       setStatus('error')
       setResponse({
         success: false,
-        message: 'Telefone deve estar no formato E.164 (ex: +5511999999999)',
+        message: 'Telefone inválido. Verifique o código do país e o número.',
         details: 'Formato inválido'
       })
       return
@@ -149,7 +262,10 @@ function OnboardingForm() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          owner_phone: fullPhoneNumber
+        })
       })
 
       const data: SubmitResponse = await res.json()
@@ -184,11 +300,12 @@ function OnboardingForm() {
         return
       }
       
-      if (!validateE164(formData.owner_phone)) {
+      const fullPhoneNumber = getFullPhoneNumber()
+      if (!validateE164(fullPhoneNumber)) {
         setStatus('error')
         setResponse({
           success: false,
-          message: 'Telefone do proprietário deve estar no formato E.164 (ex: +5511999999999)',
+          message: 'Telefone inválido. Verifique o código do país e o número.',
           details: 'Formato inválido'
         })
         return
@@ -213,6 +330,7 @@ function OnboardingForm() {
     setFormData({
       name: '',
       owner_name: '',
+      country_code: '+1',
       owner_phone: '',
       owner_email: '',
       target_country: '',
@@ -346,19 +464,57 @@ function OnboardingForm() {
                     </div>
 
                     <div className="form-group">
-                      <label htmlFor="owner_phone"><Phone size={18} /> Telefone (E.164) *</label>
-                      <input
-                        type="tel"
-                        id="owner_phone"
-                        name="owner_phone"
-                        value={formData.owner_phone}
-                        onChange={handleChange}
-                        required
-                        disabled={status === 'submitting'}
-                        placeholder="+5511999999999"
-                        pattern="^\+[1-9]\d{1,14}$"
-                      />
-                      <small>Formato oficial: +[país][DDD][número]</small>
+                      <label htmlFor="owner_phone"><Phone size={18} /> Telefone *</label>
+                      <div className="phone-input-group">
+                        <select
+                          id="country_code"
+                          name="country_code"
+                          value={formData.country_code}
+                          onChange={handleChange}
+                          disabled={status === 'submitting'}
+                          className="country-code-select"
+                        >
+                          <option value="+1">🇺🇸 +1</option>
+                          <option value="+52">🇲🇽 +52</option>
+                          <option value="+55">🇧🇷 +55</option>
+                          <option value="+54">🇦🇷 +54</option>
+                          <option value="+56">🇨🇱 +56</option>
+                          <option value="+57">🇨🇴 +57</option>
+                          <option value="+51">🇵🇪 +51</option>
+                          <option value="+58">🇻🇪 +58</option>
+                          <option value="+34">🇪🇸 +34</option>
+                          <option value="+351">🇵🇹 +351</option>
+                          <option value="+44">🇬🇧 +44</option>
+                          <option value="+33">🇫🇷 +33</option>
+                          <option value="+49">🇩🇪 +49</option>
+                          <option value="+39">🇮🇹 +39</option>
+                          <option value="+41">🇨🇭 +41</option>
+                          <option value="+31">🇳🇱 +31</option>
+                          <option value="+32">🇧🇪 +32</option>
+                          <option value="+61">🇦🇺 +61</option>
+                          <option value="+64">🇳🇿 +64</option>
+                          <option value="+81">🇯🇵 +81</option>
+                          <option value="+86">🇨🇳 +86</option>
+                          <option value="+91">🇮🇳 +91</option>
+                        </select>
+                        <input
+                          type="tel"
+                          id="owner_phone"
+                          name="owner_phone"
+                          value={formData.owner_phone}
+                          onChange={handleChange}
+                          required
+                          disabled={status === 'submitting'}
+                          placeholder={getPhonePlaceholder(formData.country_code)}
+                          className="phone-number-input"
+                        />
+                      </div>
+                      <small>
+                        Formato: {getPhonePlaceholder(formData.country_code)}
+                        {formData.owner_phone && (
+                          <span className="phone-preview"> → Número completo: {formData.country_code} {formData.owner_phone}</span>
+                        )}
+                      </small>
                     </div>
 
                     <div className="form-group">
